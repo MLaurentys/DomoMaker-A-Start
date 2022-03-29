@@ -8,6 +8,10 @@ const mongoose = require('mongoose');
 const expressHandlebars = require('express-handlebars');
 const helmet = require('helmet');
 const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
+const redis = require('redis');
+const csrf = require('csurf');
+
 require('dotenv').config();
 
 const router = require('./router.js');
@@ -16,10 +20,14 @@ const port = process.env.PORT || process.env.NODE_PORT || 3000;
 const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/DomoMaker';
 mongoose.connect(dbURI, (err) => {
   if (err) {
-    console.log('could not connect to database');
+    console.log('Could not connect to mongo database');
     throw err;
   }
 });
+
+const redisURL = `redis://default:${process.env.REDIS_PASSWORD}@${process.env.REDIS_URI}`;
+const redisClient = redis.createClient({ legacyMode: true, url: redisURL });
+redisClient.connect().catch(console.error);
 
 const app = express();
 app.use(helmet());
@@ -32,14 +40,25 @@ app.use(
   session({
     key: 'sessionid',
     secret: 'Domo Arigato',
+    store: new RedisStore({ client: redisClient }),
     resave: true,
     saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+    },
   }),
 );
 app.engine('handlebars', expressHandlebars.engine({ defaultLayout: '' }));
 app.set('view engine', 'handlebars');
 app.set('views', `${__dirname}/../views`);
 app.use(cookieParser());
+app.use(csrf());
+app.use((err, req, res, next) => {
+  if (err.code !== 'EBADCSRFTOKEN') return next(err);
+  console.log('Missing CSRF token');
+  return false;
+});
+
 router(app);
 app.listen(port, (err) => {
   if (err) {

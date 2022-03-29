@@ -3,8 +3,8 @@
    end in an error.
 */
 const handleError = (message) => {
-  document.getElementById('errorMessage').textContent = message;
-  document.getElementById('domoMessage').classList.remove('hidden');
+  document.getElementById("errorMessage").textContent = message;
+  document.getElementById("domoMessage").classList.remove("hidden");
 };
 
 /* Sends post requests to the server using fetch. Will look for various
@@ -12,21 +12,21 @@ const handleError = (message) => {
 */
 const sendPost = async (url, data) => {
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
 
   const result = await response.json();
-  document.getElementById('domoMessage').classList.add('hidden');
+  document.getElementById("domoMessage").classList.add("hidden");
 
-  if(result.redirect) {
+  if (result.redirect) {
     window.location = result.redirect;
   }
 
-  if(result.error) {
+  if (result.error) {
     handleError(result.error);
   }
 };
@@ -35,36 +35,42 @@ const sendPost = async (url, data) => {
    Sets up the event listeners for each form across the whole app.
 */
 const init = () => {
-  const signupForm = document.getElementById('signupForm');
-  const loginForm = document.getElementById('loginForm');
-  const domoForm = document.getElementById('domoForm');
-  const domoMessage = document.getElementById('domoMessage');
+  const signupForm = document.getElementById("signupForm");
+  const loginForm = document.getElementById("loginForm");
+  const domoForm = document.getElementById("domoForm");
+  const domoMessage = document.getElementById("domoMessage");
 
   /* If this page has the signupForm, add it's submit event listener.
      Event listener will grab the username, password, and password2
      from the form, validate everything is correct, and then will
      use sendPost to send the data to the server.
   */
-  if(signupForm) {
-    signupForm.addEventListener('submit', (e) => {
+  if (signupForm) {
+    signupForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      domoMessage.classList.add('hidden');
+      domoMessage.classList.add("hidden");
 
-      const username = signupForm.querySelector('#user').value;
-      const pass = signupForm.querySelector('#pass').value;
-      const pass2 = signupForm.querySelector('#pass2').value;
+      const username = signupForm.querySelector("#user").value;
+      const pass = signupForm.querySelector("#pass").value;
+      const pass2 = signupForm.querySelector("#pass2").value;
+      const _csrf = signupForm.querySelector("#_csrf").value;
 
-      if(!username || !pass || !pass2) {
-        handleError('All fields are required!');
-        return false;
-      } 
-
-      if(pass !== pass2) {
-        handleError('Passwords do not match!');
+      if (!username || !pass || !pass2) {
+        handleError("All fields are required!");
         return false;
       }
 
-      sendPost(signupForm.getAttribute('action'), {username, pass, pass2});
+      if (pass !== pass2) {
+        handleError("Passwords do not match!");
+        return false;
+      }
+
+      sendPost(signupForm.getAttribute("action"), {
+        username,
+        pass,
+        pass2,
+        _csrf,
+      });
       return false;
     });
   }
@@ -74,20 +80,21 @@ const init = () => {
      validate both values have been entered, and will use sendPost 
      to send the data to the server.
   */
-  if(loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+  if (loginForm) {
+    loginForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      domoMessage.classList.add('hidden');
+      domoMessage.classList.add("hidden");
 
-      const username = loginForm.querySelector('#user').value;
-      const pass = loginForm.querySelector('#pass').value;
+      const username = loginForm.querySelector("#user").value;
+      const pass = loginForm.querySelector("#pass").value;
+      const _csrf = loginForm.querySelector("#_csrf").value;
 
-      if(!username || !pass) {
-        handleError('Username or password is empty!');
+      if (!username || !pass) {
+        handleError("Username or password is empty!");
         return false;
       }
 
-      sendPost(loginForm.getAttribute('action'), {username, pass});
+      sendPost(loginForm.getAttribute("action"), { username, pass, _csrf });
       return false;
     });
   }
@@ -97,20 +104,21 @@ const init = () => {
      the form. It will throw an error if one or both are missing.
      Otherwise, it will send the request to the server.
   */
-  if(domoForm) {
-    domoForm.addEventListener('submit', (e) => {
+  if (domoForm) {
+    domoForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      domoMessage.classList.add('hidden');
+      domoMessage.classList.add("hidden");
 
-      const name = domoForm.querySelector('#domoName').value;
-      const age = domoForm.querySelector('#domoAge').value;
+      const name = domoForm.querySelector("#domoName").value;
+      const age = domoForm.querySelector("#domoAge").value;
+      const _csrf = domoForm.querySelector("#_csrf").value;
 
-      if(!name || !age) {
-        handleError('All fields are required!');
+      if (!name || !age) {
+        handleError("All fields are required!");
         return false;
       }
 
-      sendPost(domoForm.getAttribute('action'), {name, age});
+      sendPost(domoForm.getAttribute("action"), { name, age, _csrf });
       return false;
     });
   }
